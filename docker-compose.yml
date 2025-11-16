@@ -9,6 +9,7 @@ services:
       - ./postgres/data:/var/lib/postgresql/data
       - ./postgres/backup:/var/lib/postgresql/backup
     container_name: postgres
+
   postgres_backup:
     image: postgres:17
     container_name: postgres_backup
@@ -22,9 +23,13 @@ services:
       bash -c "
       while true; do
         echo 'Backing up...'
+
         pg_dumpall -h postgres -U $${POSTGRES_USER} > /var/lib/postgresql/backup/tmp.sql &&
         mv /var/lib/postgresql/backup/tmp.sql /var/lib/postgresql/backup/backup_$(date +%Y%m%d%H%M).sql
-        ls -tp /var/lib/postgresql/backup/backup_*.sql | tail -n +25 | xargs -I {} rm -- {}
+        ls -tp /var/lib/postgresql/backup/backup_*.sql | tail -n +11 | xargs -I {} rm -- {}
+
+        echo 'Done'
+
         sleep 86400
       done
       "
