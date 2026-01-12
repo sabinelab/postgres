@@ -21,24 +21,34 @@ services:
       -c maintenance_work_mem=256MB
       -c effective_io_concurrency=200
       -c random_page_cost=1.1
+      -c unix_socket_permissions=0777
+
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-h', 'localhost', '-U', '$${POSTGRES_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   postgres_backup:
     image: postgres:17
     container_name: postgres_backup
     restart: always
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     network_mode: host
     env_file:
       - .env
     volumes:
       - ./postgres/backup:/var/lib/postgresql/backup
+      - ./postgres/run:/var/run/postgresql
     entrypoint: >
       bash -c "
       while true; do
         echo 'Backing up...'
 
-        pg_dumpall -h localhost -U $${POSTGRES_USER} > /var/lib/postgresql/backup/tmp.sql &&
+        pg_dumpall -h /var/run/postgresql -U $${POSTGRES_USER} > /var/lib/postgresql/backup/tmp.sql &&
         mv /var/lib/postgresql/backup/tmp.sql /var/lib/postgresql/backup/backup_$(date +%Y%m%d%H%M).sql
         ls -tp /var/lib/postgresql/backup/backup_*.sql | tail -n +11 | xargs -I {} rm -- {}
 
