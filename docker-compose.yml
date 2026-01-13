@@ -48,7 +48,7 @@ services:
         echo 'Backing up...'
 
         pg_dumpall -h localhost -U $${POSTGRES_USER} > /var/lib/postgresql/18/backup/tmp.sql &&
-        mv /var/lib/postgresql/backup/tmp.sql /var/lib/postgresql/18/backup/backup_$(date +%Y%m%d%H%M).sql
+        mv /var/lib/postgresql/18/backup/tmp.sql /var/lib/postgresql/18/backup/backup_$(date +%Y%m%d%H%M).sql
         ls -tp /var/lib/postgresql/18/backup/backup_*.sql | tail -n +11 | xargs -I {} rm -- {}
 
         echo 'Done'
