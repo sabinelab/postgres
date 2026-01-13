@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17
+    image: postgres:18
     container_name: postgres
     restart: always
     network_mode: host
@@ -9,8 +9,8 @@ services:
     env_file:
       - .env
     volumes:
-      - ./postgres/data:/var/lib/postgresql/data
-      - ./postgres/backup:/var/lib/postgresql/backup
+      - ./postgres/data:/var/lib/postgresql/18/data
+      - ./postgres/backup:/var/lib/postgresql/18/backup
 
     command: >
       postgres
@@ -29,7 +29,7 @@ services:
       start_period: 30s
 
   postgres_backup:
-    image: postgres:17
+    image: postgres:18
     container_name: postgres_backup
     restart: always
     depends_on:
@@ -39,7 +39,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./postgres/backup:/var/lib/postgresql/backup
+      - ./postgres/backup:/var/lib/postgresql/18/backup
     entrypoint: >
       bash -c "
       while true; do
