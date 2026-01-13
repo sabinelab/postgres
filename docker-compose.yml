@@ -16,6 +16,7 @@ services:
 
     command: >
       postgres
+      -c listen_addresses='localhost'
       -c shared_buffers=2GB
       -c effective_cache_size=4500MB
       -c work_mem=16MB
@@ -24,35 +25,35 @@ services:
       -c random_page_cost=1.1
 
     healthcheck:
-      test: ['CMD', 'pg_isready', '-h', 'localhost', '-U', '$${POSTGRES_USER}']
+      test: ['CMD-SHELL', 'PGPASSWORD=$${POSTGRES_PASSWORD} pg_isready -h localhost -U $${POSTGRES_USER}']
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
 
-  postgres_backup:
-    image: postgres:18
-    container_name: postgres_backup
-    restart: always
-    depends_on:
-      postgres:
-        condition: service_healthy
-    network_mode: host
-    env_file:
-      - .env
-    volumes:
-      - ./postgres/backup:/var/lib/postgresql/18/backup
-    entrypoint: >
-      bash -c "
-      while true; do
-        echo 'Backing up...'
+postgres_backup:
+  image: postgres:18
+  container_name: postgres_backup
+  restart: always
+  depends_on:
+    postgres:
+      condition: service_healthy
+  network_mode: host
+  env_file:
+    - .env
+  volumes:
+    - ./postgres/backup:/var/lib/postgresql/18/backup
+  entrypoint: >
+    bash -c "
+    while true; do
+      echo 'Backing up...'
 
-        pg_dumpall -h localhost -U $${POSTGRES_USER} > /var/lib/postgresql/18/backup/tmp.sql &&
-        mv /var/lib/postgresql/18/backup/tmp.sql /var/lib/postgresql/18/backup/backup_$(date +%Y%m%d%H%M).sql
-        ls -tp /var/lib/postgresql/18/backup/backup_*.sql | tail -n +11 | xargs -I {} rm -- {}
+      PGPASSWORD=$${POSTGRES_PASSWORD} pg_dumpall -h localhost -U $${POSTGRES_USER} > /var/lib/postgresql/18/backup/tmp.sql && \
+      mv /var/lib/postgresql/18/backup/tmp.sql /var/lib/postgresql/18/backup/backup_$(date +%Y%m%d%H%M).sql
+      ls -tp /var/lib/postgresql/18/backup/backup_*.sql | tail -n +11 | xargs -I {} rm -- {}
 
-        echo 'Done'
+      echo 'Done'
 
-        sleep 86400
-      done
-      "
+      sleep 86400
+    done
+    "
